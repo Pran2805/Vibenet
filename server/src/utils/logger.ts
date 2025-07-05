@@ -77,7 +77,7 @@ const DBTransport = (): Array<MongoDBTransportInstance> => {
                 db: config.DATABASE_URL as string,
                 metaKey: "meta",
                 expireAfterSeconds: 30 * 24 * 60 * 60,
-                collection: 'application-logs'
+                collection: "application-logs"
             })
         ]
     }
@@ -108,10 +108,16 @@ const consoleTransport = (): Array<ConsoleTransportInstance> => {
 
     return []
 }
-
+export {
+    DBTransport,
+    FileTransport,
+}
 export default createLogger({
     defaultMeta: {
         meta: {}
     },
-    transports: [ ...FileTransport(),...DBTransport(), ...consoleTransport()]
+    transports: [
+        // ...FileTransport(),...DBTransport(),
+        ...consoleTransport()
+    ]
 })

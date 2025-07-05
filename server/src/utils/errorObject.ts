@@ -10,7 +10,7 @@ export default (err: Error | unknown, req: Request, errorStatusCode: number = 50
         success: false,
         statusCode: errorStatusCode,
         request:{
-            ip: req.ip || null,
+            ip: req.ip || null, 
             method: req.method,
             url: req.originalUrl,
         },
