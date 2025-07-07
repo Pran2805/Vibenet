@@ -4,7 +4,7 @@ import {create} from 'zustand'
 
 export const useAuthStore = create((set)=>({
     authUser: null,
-    isPending: false,
+    isPending: true,
     isSignin: null,
 
     signup: async(data: object)=>{
@@ -57,12 +57,15 @@ export const useAuthStore = create((set)=>({
 
     checkAuth: async() =>{
         try {
+            set({isPending: true})
             const res = await axiosInstance.post('/auth/check-auth')
 
             set({isSignin: res.data.success, authUser: res.data.user})
         } catch (error: any) {
             set({isSignin: false})
              console.warn(error.response.data.message)
+        }finally{
+            set({isPending: false})
         }
     },
     logout: async() =>{

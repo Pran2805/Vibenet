@@ -8,7 +8,7 @@ import logger from './logger';
 export default (err: Error | unknown, req: Request, errorStatusCode: number = 500): THttpError =>{
     const errorObj: THttpError = {
         success: false,
-        statusCode: errorStatusCode,
+        statusCode: errorStatusCode || 500,
         request:{
             ip: req.ip || null, 
             method: req.method,

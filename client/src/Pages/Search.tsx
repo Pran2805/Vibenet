@@ -1,10 +1,11 @@
-import React from 'react'
+import Navbar from "@/Components/Navbar"
+
 
 function Search() {
   return (
-    <div>
-      
-    </div>
+    <>
+     <Navbar /> 
+    </>
   )
 }
 

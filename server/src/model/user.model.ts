@@ -1,6 +1,21 @@
-import mongoose, { Schema } from "mongoose"
+import mongoose, { Schema, Types } from "mongoose"
 
-const userSchema = new Schema(
+export interface UserDoc extends Document {
+    _id: Types.ObjectId
+    username: string
+    name?: string
+    email: string
+    password: string
+    bio?: string
+    avatar?: string
+    followers: mongoose.Types.ObjectId[]
+    following: mongoose.Types.ObjectId[]
+    isVerified: boolean
+    posts: mongoose.Types.ObjectId[]
+    createdAt: Date
+    updatedAt: Date
+}
+const userSchema = new Schema<UserDoc>(
     {
         username: {
             type: String,
@@ -27,27 +42,32 @@ const userSchema = new Schema(
         password: {
             type: String,
             required: true,
-            minlength: [6, "Password must be atleast 6 characters long"],
+            minlength: [6, "Password must be atleast 6 characters long"]
         },
         bio: {
             type: String,
             required: false,
             trim: true,
             maxlength: 240,
-            default: ''
+            default: ""
         },
         avatar: {
             type: String,
             required: false
         },
-        followers: {
-            type: [String],
-            default: []
-        },
-        following: {
-            type: [String],
-            default: []
-        },
+        followers: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "User"
+            }
+        ],
+        following: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "User"
+            }
+        ],
+
         isVerified: {
             type: Boolean,
             default: false
@@ -64,5 +84,5 @@ const userSchema = new Schema(
     }
 )
 
-const User = mongoose.model("User", userSchema)
+const User = mongoose.model<UserDoc>("User", userSchema)
 export default User

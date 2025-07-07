@@ -1,6 +1,7 @@
 import Navbar from "@/Components/Navbar"
 
-function CreatePost() {
+
+function Communities() {
   return (
     <>
      <Navbar /> 
@@ -8,4 +9,4 @@ function CreatePost() {
   )
 }
 
-export default CreatePost
+export default Communities

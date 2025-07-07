@@ -1,9 +1,17 @@
 import { NextFunction, Request, Response } from "express"
 import jwt from "jsonwebtoken"
 import config from "../config/config"
-import User from "../model/user.model"
+import User, {UserDoc} from "../model/user.model"
 import httpError from "../utils/httpError"
 
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: UserDoc; 
+    }
+  }
+}
 export const verifyAuth = async (req: Request, _: Response, next: NextFunction) => {
     try {
         const {auth} = req.cookies
@@ -19,7 +27,7 @@ export const verifyAuth = async (req: Request, _: Response, next: NextFunction) 
             throw new Error("User is not found")
         }
     
-        req.body = user
+        req.user = user
         next()
     } catch (error) {
         httpError(next, error, req, 401)
@@ -48,7 +56,7 @@ export const verifyUser = async (req: Request, _: Response, next: NextFunction) 
             throw new Error("User is not Verified")
         }
 
-        req.body = user
+        req.user = user
         next()
     } catch (error) {
         httpError(next, error, req, 401)
