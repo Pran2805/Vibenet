@@ -14,7 +14,7 @@ const HomeCard: React.FC<CommunityCardProp> = ({ Name, Desc, Img, link }) => {
         <>
             <Card className="flex text-white bg-background/20 wrap">
                 <CardHeader className="flex items-center ">
-                    <img src={Img} alt={Name} className="size-10 rounded-full mr-10" />
+                    <img src={Img} alt={Name} className="size-10 rounded-full justify-end" />
                     <CardTitle>{Name}</CardTitle>
                 </CardHeader>
                 <p className="">{Desc}</p>

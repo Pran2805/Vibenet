@@ -60,7 +60,7 @@ export const useAuthStore = create((set)=>({
             set({isPending: true})
             const res = await axiosInstance.post('/auth/check-auth')
 
-            set({isSignin: res.data.success, authUser: res.data.user})
+            set({isSignin: res.data.success, authUser: res.data.data.user})
         } catch (error: any) {
             set({isSignin: false})
              console.warn(error.response.data.message)

@@ -14,7 +14,7 @@ function Navbar() {
       <nav className="setInterval(() => {
         
       }, intervalInms)
-       top-0 left-0 w-full z-50 bg-background/10 backdrop-blur-md shadow-sm">
+       top-0 left-0 fixed w-full z-50 bg-background/10 backdrop-blur-md shadow-sm">
         <div className="flex justify-between items-center px-10 py-4">
           {/* Logo */}
           <div className="flex items-center space-x-3">

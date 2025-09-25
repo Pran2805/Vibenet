@@ -11,13 +11,16 @@ import Comment from "../model/comment.model"
 export const createPost = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, description } = await req.body
-
+        console.log(req.body)
         if (!title?.trim()) {
             throw new Error("Title is required")
         }
 
-        const files = req.files
+        console.log(req.file)
 
+        const files = (req.files as { [fieldname: string]: Express.Multer.File[] })["files[]"]
+
+        console.log(req.files)
         const data: string[] = []
 
         if (files && Array.isArray(files)) {
@@ -40,7 +43,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
         })
 
         await User.findByIdAndUpdate(req.user?._id, { $push: { posts: post._id } })
-        httpResponse(req, res, 201, "Post created successfully", post)
+        httpResponse(req, res, 201, "Post created successfully", { post: post })
     } catch (error: any) {
         httpError(next, error?.message || "Error creating post", req, 400)
     }
@@ -75,192 +78,208 @@ export const getPost = async (req: Request, res: Response, next: NextFunction) =
 }
 
 export const updatePost = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const postId = req.params.id;
-    const user = req.user?._id;
+    try {
+        const postId = req.params.id
+        const user = req.user?._id
 
-    const { title, description } = req.body;
+        const { title, description } = req.body
 
-    if (!title && !description) {
-      throw new Error("Title or Description is required");
+        if (!title && !description) {
+            throw new Error("Title or Description is required")
+        }
+
+        if (!postId) {
+            throw new Error("Invalid Post Id")
+        }
+
+        if (!user) {
+            throw new Error("User is not logged in")
+        }
+
+        const post = await Post.findById(postId)
+        if (!post) {
+            throw new Error("Post not found")
+        }
+
+        if (post.owner.toString() !== user.toString()) {
+            throw new Error("You are not authorized to update this post")
+        }
+
+        const updatedFields: any = {}
+        if (title) updatedFields.title = title
+        if (description) updatedFields.description = description
+
+        const updatedPost = await Post.findByIdAndUpdate(postId, updatedFields, {
+            new: true
+        })
+
+        if (!updatedPost) {
+            throw new Error("Post is not updated")
+        }
+
+        httpResponse(req, res, 200, "Post updated successfully", updatedPost)
+    } catch (error: any) {
+        httpError(next, error?.message || "Error updating post", req, 400)
     }
-
-    if (!postId) {
-      throw new Error("Invalid Post Id");
-    }
-
-    if (!user) {
-      throw new Error("User is not logged in");
-    }
-
-    const post = await Post.findById(postId);
-    if (!post) {
-      throw new Error("Post not found");
-    }
-
-    if (post.owner.toString() !== user.toString()) {
-      throw new Error("You are not authorized to update this post");
-    }
-
-    const updatedFields: any = {};
-    if (title) updatedFields.title = title;
-    if (description) updatedFields.description = description;
-
-    const updatedPost = await Post.findByIdAndUpdate(postId, updatedFields, {
-      new: true,
-    });
-
-    if (!updatedPost) {
-      throw new Error("Post is not updated");
-    }
-
-    httpResponse(req, res, 200, "Post updated successfully", updatedPost);
-  } catch (error: any) {
-    httpError(next, error?.message || "Error updating post", req, 400);
-  }
-};
+}
 
 export const deletePost = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const postId = req.params.id;
-    if (!postId) {
-      throw new Error("Not Provided the Post id");
+    try {
+        const postId = req.params.id
+        if (!postId) {
+            throw new Error("Not Provided the Post id")
+        }
+
+        const post = await Post.findById(postId)
+        if (!post) {
+            throw new Error("Invalid Post Id")
+        }
+
+        const deletePromises = post.files.map((url) => {
+            const parts = url.split("/")
+            const filename = parts[parts.length - 1].split(".")[0]
+            return cloudinary.uploader.destroy(filename)
+        })
+
+        await Promise.all(deletePromises)
+
+        await Post.findByIdAndDelete(postId)
+
+        httpResponse(req, res, 200, "Post deleted successfully", post)
+    } catch (error: any) {
+        httpError(next, error?.message || "Error deleting post", req, 400)
     }
-
-    const post = await Post.findById(postId);
-    if (!post) {
-      throw new Error("Invalid Post Id");
-    }
-
-    const deletePromises = post.files.map((url) => {
-      const parts = url.split("/");
-      const filename = parts[parts.length - 1].split(".")[0]; 
-      return cloudinary.uploader.destroy(filename);
-    });
-
-    await Promise.all(deletePromises);
-
-    await Post.findByIdAndDelete(postId);
-
-    httpResponse(req, res, 200, "Post deleted successfully", post);
-  } catch (error: any) {
-    httpError(next, error?.message || "Error deleting post", req, 400);
-  }
-};
+}
 
 export const toggleLikePost = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const postId = req.params.id;
-    const userId = req.user?._id;
+    try {
+        const postId = req.params.id
+        const userId = req.user?._id
 
-    if (!userId) throw new Error("User not authenticated");
+        if (!userId) throw new Error("User not authenticated")
 
-    const post = await Post.findById(postId);
-    if (!post) throw new Error("Post not found");
+        const post = await Post.findById(postId)
+        if (!post) throw new Error("Post not found")
 
-    const alreadyLiked = post.likes.includes(userId);
+        const alreadyLiked = post.likes.includes(userId)
 
-    if (alreadyLiked) {
-      // ❌ Unlike
-      post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
-      await post.save();
-      httpResponse(req, res, 200, "Post unliked", post.likes);
-    } else {
-      // ✅ Like
-      post.likes.push(userId);
-      await post.save();
-      httpResponse(req, res, 200, "Post liked", post.likes);
+        if (alreadyLiked) {
+            // ❌ Unlike
+            post.likes = post.likes.filter((id) => id.toString() !== userId.toString())
+            await post.save()
+            httpResponse(req, res, 200, "Post unliked", post.likes)
+        } else {
+            // ✅ Like
+            post.likes.push(userId)
+            await post.save()
+            httpResponse(req, res, 200, "Post liked", post.likes)
+        }
+    } catch (error: any) {
+        httpError(next, error?.message || "Error toggling like", req, 400)
     }
-  } catch (error: any) {
-    httpError(next, error?.message || "Error toggling like", req, 400);
-  }
-};
-
+}
 
 export const createComment = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const postId = req.params.id;
-    const userId = req.user?._id;
-    const { comment } = req.body;
+    try {
+        const postId = req.params.id
+        const userId = req.user?._id
+        const { comment } = req.body
 
-    if (!comment?.trim()) throw new Error("Comment is required");
+        if (!comment?.trim()) throw new Error("Comment is required")
 
-    const newComment = await Comment.create({
-      user: userId,
-      post: postId,
-      comment: comment.trim()
-    });
+        const newComment = await Comment.create({
+            user: userId,
+            post: postId,
+            comment: comment.trim()
+        })
 
-    httpResponse(req, res, 201, "Comment created", newComment);
-  } catch (error: any) {
-    httpError(next, error?.message || "Failed to create comment", req, 400);
-  }
-};
+        httpResponse(req, res, 201, "Comment created", newComment)
+    } catch (error: any) {
+        httpError(next, error?.message || "Failed to create comment", req, 400)
+    }
+}
 
 export const getComment = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const postId = req.params.id;
+    try {
+        const postId = req.params.id
 
-    const comments = await Comment.find({ post: postId })
-      .populate("user", "username name avatar")
-      .sort({ createdAt: -1 });
+        const comments = await Comment.find({ post: postId }).populate("user", "username name avatar").sort({ createdAt: -1 })
 
-    httpResponse(req, res, 200, "Comments fetched", comments);
-  } catch (error: any) {
-    httpError(next, error?.message || "Failed to fetch comments", req, 400);
-  }
-};
-
+        httpResponse(req, res, 200, "Comments fetched", comments)
+    } catch (error: any) {
+        httpError(next, error?.message || "Failed to fetch comments", req, 400)
+    }
+}
 
 export const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { commentId } = req.params;
-    const userId = req.user?._id;
+    try {
+        const { commentId } = req.params
+        const userId = req.user?._id
 
-    if(!userId){
-      throw new Error("User is not logged in")
+        if (!userId) {
+            throw new Error("User is not logged in")
+        }
+        const comment = await Comment.findById(commentId)
+        if (!comment) throw new Error("Comment not found")
+
+        if (comment.user.toString() !== userId.toString()) {
+            throw new Error("Unauthorized to delete this comment")
+        }
+
+        await comment.deleteOne()
+
+        httpResponse(req, res, 200, "Comment deleted", commentId)
+    } catch (error: any) {
+        httpError(next, error?.message || "Failed to delete comment", req, 400)
     }
-    const comment = await Comment.findById(commentId);
-    if (!comment) throw new Error("Comment not found");
-
-    if (comment.user.toString() !== userId.toString()) {
-      throw new Error("Unauthorized to delete this comment");
-    }
-
-    await comment.deleteOne();
-
-    httpResponse(req, res, 200, "Comment deleted", commentId);
-  } catch (error: any) {
-    httpError(next, error?.message || "Failed to delete comment", req, 400);
-  }
-};
-
+}
 
 export const updateComment = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { commentId } = req.params;
-    const { comment } = req.body;
-    const userId = req.user?._id;
+    try {
+        const { commentId } = req.params
+        const { comment } = req.body
+        const userId = req.user?._id
 
-    if(!userId){
-      throw new Error("User is not logged in")
+        if (!userId) {
+            throw new Error("User is not logged in")
+        }
+
+        if (!comment?.trim()) throw new Error("Updated comment is required")
+
+        const existing = await Comment.findById(commentId)
+        if (!existing) throw new Error("Comment not found")
+
+        if (existing.user.toString() !== userId.toString()) {
+            throw new Error("Unauthorized to update this comment")
+        }
+
+        existing.comment = comment.trim()
+        await existing.save()
+
+        httpResponse(req, res, 200, "Comment updated", existing)
+    } catch (error: any) {
+        httpError(next, error?.message || "Failed to update comment", req, 400)
     }
+}
 
-    if (!comment?.trim()) throw new Error("Updated comment is required");
+export const getPostLikes =async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const postId = req.params.id
 
-    const existing = await Comment.findById(commentId);
-    if (!existing) throw new Error("Comment not found");
+        if (!postId) {
+            throw new Error("Post id is required")
+        }
 
-    if (existing.user.toString() !== userId.toString()) {
-      throw new Error("Unauthorized to update this comment");
+        const post = await Post.findById(postId).select("likes")
+
+        if (!post) {
+           throw new Error("Post not found")
+        }
+
+        httpResponse(req, res, 200, "Comment updated", {
+            likes: post.likes
+        })
+    } catch (error: any) {
+        httpError(next, error?.message || "Failed to update comment", req, 400)
     }
-
-    existing.comment = comment.trim();
-    await existing.save();
-
-    httpResponse(req, res, 200, "Comment updated", existing);
-  } catch (error: any) {
-    httpError(next, error?.message || "Failed to update comment", req, 400);
-  }
-};
-
+}

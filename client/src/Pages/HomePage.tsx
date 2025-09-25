@@ -1,102 +1,84 @@
 import HomeCard from "@/Components/HomeCard";
 import Navbar from "@/Components/Navbar"
 import PostCard from "@/Components/PostCard"
+import { usePostStore } from "@/Store/usePostStore";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 function HomePage() {
-  const posts = [
-    {
-      title: "Post 1",
-      content: "This is the content of post 1",
-      author: "John Doe",
-    },
-    {
-      title: "Post 2",
-      content: "This is the content of post 2",
-      author: "Jane Doe",
-    }
-  ];
+  const [posts, setPosts] = useState<any[]>([]);
 
-  const communities = [
-  {
-    name: "CodeCrafters",
-    logo: "https://placehold.co/100x100?text=CC",
-    description: "A passionate group of developers building cool stuff with JavaScript and TypeScript.",
-    joining: "12.3K members"
-  },
-  {
-    name: "DesignHub",
-    logo: "https://placehold.co/100x100?text=DH",
-    description: "Creative minds sharing their love for UI/UX, motion design, and product thinking.",
-    joining: "8.4K members"
-  },
+  const { getPost } : any = usePostStore()
 
-];
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const fetchedPosts = await getPost();
+      console.log(fetchPosts)
+      setPosts(fetchedPosts);
+    };
+    fetchPosts();
+  }, []);
 
-const Persons = [{
-  name: "John Doe",
-  image: "https://placehold.co/100x100?text=JD",
-  description: "Software engineer with a passion for building scalable and maintainable systems.",
-  joining: "12.3K followers"
-
-},
-{
-  name: "Jane Doe",
-  image: "https://placehold.co/100x100?text=JD",
-  description: "Full-stack developer with a focus on creating seamless user experiences.",
-  joining: "8.4K followers"
-}
-]
 
 
   return (
     <div className="w-screen overflow-x-hidden">
       <Navbar />
-      <div className="mx-4 md:ml-[300px] mt-10 flex flex-row w-[85%] ">
-        <div className="flex-1/2 ">
-          <h1 className="text-3xl font-bold mx-2 mb-4 w">Home</h1>
-          {posts.map((post, index) => (
-            <PostCard
-              key={index}
-              title={post.title}
-              content={post.content}
-              author={post.author}
-            />
-          ))}
+      <div className="mx-4 md:ml-[300px] mt-20">
+        <div className="lg:flex-1/2 w-full">
+          <h1 className="text-3xl font-bold mx-2 mb-4">Home</h1>
+          {
+
+            posts.length === 0 ? (
+            <p className="text-center mt-10 text-gray-500">No posts yet.</p>
+          ) : (
+            posts.map((post) => (
+              <PostCard
+                key={post._id}
+                id={post._id}
+                title={post.title}
+                content={post.description}
+                author={post.owner.username}
+                files={post.files}
+              />
+            ))
+          )
+          
+          }
         </div>
-        <div className="hidden md:block basis-1/3 text-white px-4 pr-20 flex-1/2">
-          <h2 className="text-3xl font-semibold mb-2 pr-20">Community</h2>
-          <div className="bg-background/10 px-10 pr-20 rounded-sm pb-5">
+        {/* <div className="hidden lg:block basis-1/3 text-white px-4 pr-20 flex-1/2">
+          <h2 className="text-3xl font-semibold mb-2 pr-20">Community</h2> */}
+          {/* <div className="bg-background/10 px-10 pr-20 rounded-sm pb-5">
             <div>
-            <p className="text-xl pt-6">Suggested Communities</p>
+              <p className="text-xl pt-6">Suggested Communities</p>
               {/* community card */}
-              {
-                communities.map((community, index) =>(
+              {/* {
+                communities.map((community, index) => (
                   <div key={index} className="py-3">
 
-                    <HomeCard  Name={community.name} Desc={community.description} Img={community.logo} link={community.joining}  />
+                    <HomeCard Name={community.name} Desc={community.description} Img={community.logo} link={community.joining} />
                   </div>
                 ))
               }
             </div>
             <Link to='/communities' className="text-sm  font-semibold text-blue-600 hover:text-blue-700 active:text-blue-500">Show More {">>"}</Link>
-          </div>
-            {/* Find People */}
-          <div className="px-10 bg-background/10 my-3 rounded-sm pb-5">
+          </div> */} 
+          {/* Find People */}
+          {/* <div className="px-10 bg-background/10 my-3 rounded-sm pb-5">
             <p className="text-xl">Similar Minds</p>
-              {
-                Persons.map((person, index) =>(
-                   <div key={index} className="py-3">
+            {
+              Persons.map((person, index) => (
+                <div key={index} className="py-3">
 
-                    <HomeCard  Name={person.name} Desc={person.description} Img={person.image} link={person.joining}  />
-                  </div>
-                ))
-              }
+                  <HomeCard Name={person.name} Desc={person.description} Img={person.image} link={person.joining} />
+                </div>
+              ))
+            }
 
-              <Link to='/search' className="text-sm  font-semibold text-blue-600 hover:text-blue-700 active:text-blue-500">Show More {">>"}</Link>
-          </div>
+            <Link to='/search' className="text-sm  font-semibold text-blue-600 hover:text-blue-700 active:text-blue-500">Show More {">>"}</Link>
+          </div> */}
 
-        </div>
+        {/* // </div> */}
       </div>
     </div>
   );

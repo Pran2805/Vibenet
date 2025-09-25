@@ -1,55 +1,78 @@
 import { Navigate, Route, Routes } from "react-router-dom"
+import { useEffect, useMemo } from "react"
+
 import SignIn from "./Pages/SignIn"
 import SignUp from "./Pages/SignUp"
 import VerifyEmail from "./Pages/VerifyEmail"
 import HomePage from "./Pages/HomePage"
-import { useAuthStore } from "./Store/useAuthStore"
-import { Toaster } from 'react-hot-toast';
-import { useEffect } from "react"
 import Search from "./Pages/Search"
 import CreatePost from "./Pages/CreatePost"
 import Profile from "./Pages/Profile"
 import Communities from "./Pages/Communities"
-import StarsBackground from "./Components/StarBackground"
+import Activity from "./Pages/Activity"
 import NoPageFound from "./Pages/NoPageFound"
 import Loading from "./Pages/Loading"
-import Activity from "./Pages/Activity"
+
+import StarsBackground from "./Components/StarBackground"
+import { Toaster } from "react-hot-toast"
+import { useAuthStore } from "./Store/useAuthStore"
 
 function App() {
-  const {authUser, checkAuth, isPending}: any = useAuthStore()
+  const { authUser, checkAuth, isPending } : any= useAuthStore()
 
- useEffect(() => {
+  useEffect(() => {
     if (!authUser) {
-      checkAuth();
+      checkAuth()
     }
-  }, [authUser, checkAuth]);
+  }, [authUser, checkAuth])
 
-  if (isPending) {
-    return (
-     
-        <Loading />
-    
-    );
-  }
+
+  const isVerified = useMemo(() => authUser && authUser.isVerified, [authUser])
+
+  if (isPending) return <Loading />
 
   return (
-   <div className=" min-h-screen text-white overflow-x-hidden">
-    <StarsBackground />
+    <div className="min-h-screen text-white overflow-x-hidden">
+      <StarsBackground />
       <Toaster />
       <Routes>
-        <Route path="/" element={authUser && authUser.isVerified ? <HomePage /> : <Navigate to="/signin" />} />
-        <Route path="/signup" element={!authUser ? <SignUp /> : <Navigate to="/" />} />
-        <Route path="/signin" element={!authUser ? <SignIn /> : <Navigate to="/" />} />
+        <Route
+          path="/"
+          element={isVerified ? <HomePage /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/signup"
+          element={!authUser ? <SignUp /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/signin"
+          element={!authUser ? <SignIn /> : <Navigate to="/" />}
+        />
         <Route path="/verify-email/:id" element={<VerifyEmail />} />
 
-        {/* Authenticated Pages */}
-        <Route path="/activity" element={authUser && authUser.isVerified ? <Activity /> : <Navigate to="/signin" />} />
-        <Route path="/search" element={authUser && authUser.isVerified ? <Search /> : <Navigate to="/signin" />} />
-        <Route path="/create-post" element={authUser && authUser.isVerified ? <CreatePost /> : <Navigate to="/signin" />} />
-        <Route path="/profile" element={authUser && authUser.isVerified ? <Profile /> : <Navigate to="/signin" />} />
-        <Route path="/communities" element={authUser && authUser.isVerified ? <Communities /> : <Navigate to="/signin" />} />
+        {/* Authenticated Routes */}
+        <Route
+          path="/activity"
+          element={isVerified ? <Activity /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/search"
+          element={isVerified ? <Search /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/create-post"
+          element={isVerified ? <CreatePost /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/profile"
+          element={isVerified ? <Profile /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/communities"
+          element={isVerified ? <Communities /> : <Navigate to="/signin" />}
+        />
 
-        {/* No Page Found */}
+        {/* Catch-all */}
         <Route path="*" element={<NoPageFound />} />
       </Routes>
     </div>

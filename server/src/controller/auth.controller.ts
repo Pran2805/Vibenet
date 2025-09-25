@@ -133,22 +133,12 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 
-export const checkAuth = async(req: Request, res: Response) =>{
+export const checkAuth = async(req: Request, res: Response, next: NextFunction) =>{
     try {
-        const user = await req.body;
-        // httpResponse(req, res, 200, responseMessage.SUCCESS, user)
-        res.status(200).json({
-            user,
-            success: true,
-            message: 'user authenticated'
-        }
-        )
+        const user = req.user;
+        httpResponse(req, res, 200, responseMessage.SUCCESS, {user:user})
+        
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: 'user authenticated'
-        }
-        )
-        // httpError(next, error, req, 500)
+        httpError(next, error, req, 500)
     }
 }
